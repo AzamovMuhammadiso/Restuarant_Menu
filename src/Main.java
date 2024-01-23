@@ -1,6 +1,6 @@
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
-import java.util.Map;  // Import Map class
 
 public class Main {
     private static User loggedInUser;
@@ -9,13 +9,12 @@ public class Main {
     public static void main(String[] args) {
         UserManagement userManagement = new UserManagement();
         Scanner scanner = new Scanner(System.in);
-
+        System.out.println("Welcome to Delicious Bites Reservation System!");
+        reserveDefaultTables();
         while (true) {
             if (loggedInUser == null) {
-                // Display login/registration options
                 displayLoginOptions(scanner, userManagement);
             } else {
-                // Display main menu based on user type
                 if (loggedInUser.getUserType() == UserType.STAFF) {
                     displayStaffMenu(scanner);
                 } else {
@@ -23,6 +22,14 @@ public class Main {
                 }
             }
         }
+    }
+
+    private static void reserveDefaultTables() {
+        User user1 = new User("user1", "password", UserType.USER);
+        User user2 = new User("user2", "password", UserType.USER);
+
+        reservationSystem.reserveTable(1, "2024-01-20", "12:00", user1);
+        reservationSystem.reserveTable(2, "2024-01-20", "12:00", user2);
     }
 
     private static void displayLoginOptions(Scanner scanner, UserManagement userManagement) {
@@ -36,15 +43,12 @@ public class Main {
 
         switch (loginChoice) {
             case "1":
-                // Register User
                 registerUser(scanner, userManagement);
                 break;
             case "2":
-                // Login
                 login(scanner, userManagement);
                 break;
             case "3":
-                // Exit
                 System.out.println("Exiting the reservation system. Goodbye!");
                 scanner.close();
                 System.exit(0);
@@ -60,7 +64,7 @@ public class Main {
         System.out.print("Enter password for registration: ");
         String password = scanner.nextLine();
 
-        UserType userType = UserType.USER; // By default, registered users are not staff
+        UserType userType = UserType.USER;
 
         if (username.equals("staff") && password.equals("staff123")) {
             userType = UserType.STAFF;
@@ -90,9 +94,11 @@ public class Main {
         System.out.println("\nOptions:");
         System.out.println("1. Display Menu");
         System.out.println("2. Make Reservation");
-        System.out.println("3. Checkout");
-        System.out.println("4. Exit");
-        System.out.print("Enter your choice (1-4): ");
+        System.out.println("3. View Reservations");
+        System.out.println("4. Checkout");
+        System.out.println("5. Reserve Table");
+        System.out.println("6. Exit");
+        System.out.print("Enter your choice (1-6): ");
 
         String choice = scanner.nextLine();
 
@@ -110,11 +116,9 @@ public class Main {
 
         switch (staffChoice) {
             case "1":
-                // View Reservations
                 viewReservations();
                 break;
             case "2":
-                // Manage Menu
                 manageMenu(scanner);
                 break;
             case "3":
@@ -127,9 +131,8 @@ public class Main {
 
     private static void exit() {
         System.out.println("Exiting staff menu. Returning to login screen.");
-        loggedInUser = null;  // Reset logged-in user
+        loggedInUser = null;
     }
-
 
     private static void handleUserChoice(String choice, Scanner scanner) {
         switch (choice) {
@@ -137,7 +140,6 @@ public class Main {
                 reservationSystem.getMenu().displayMenu();
                 break;
             case "2":
-                // Make Reservation
                 if (loggedInUser != null) {
                     try {
                         System.out.print("Enter table number: ");
@@ -145,7 +147,7 @@ public class Main {
                         System.out.print("Enter selected meals (comma-separated): ");
                         String[] selectedMeals = scanner.nextLine().split(",");
                         List<String> selectedMealsList = List.of(selectedMeals);
-                        reservationSystem.makeReservation(tableNumber, selectedMealsList);
+                        reservationSystem.makeReservation(tableNumber, selectedMealsList, loggedInUser);
                     } catch (IllegalArgumentException e) {
                         System.out.println("Error: " + e.getMessage());
                     }
@@ -154,7 +156,9 @@ public class Main {
                 }
                 break;
             case "3":
-                // Checkout
+                viewReservations();
+                break;
+            case "4":
                 if (loggedInUser != null) {
                     try {
                         System.out.print("Enter table number for checkout: ");
@@ -167,14 +171,18 @@ public class Main {
                     System.out.println("Please log in to perform checkout.");
                 }
                 break;
-            case "4":
-                // Exit
+            case "5":
+                reserveTable(scanner);
+                break;
+            case "6":
                 System.out.println("Exiting the reservation system. Goodbye!");
-                scanner.close();
-                System.exit(0);
+//                scanner.close();
+//                System.exit(0);
+//                displayLoginOptions(Scanner scanner, UserManagement userManagement);
+                loggedInUser = null;
                 break;
             default:
-                System.out.println("Invalid choice. Please enter a number between 1 and 4.");
+                System.out.println("Invalid choice. Please enter a number between 1 and 6.");
         }
     }
 
@@ -184,6 +192,7 @@ public class Main {
         System.out.println("2. Add Item to Menu");
         System.out.println("3. Update Item in Menu");
         System.out.println("4. Delete Item from Menu");
+        System.out.println("5. Exit");
         System.out.print("Enter your choice (1-4): ");
 
         String menuChoice = scanner.nextLine();
@@ -204,6 +213,9 @@ public class Main {
             case "4":
                 // Delete Item from Menu
                 deleteItemFromMenu(scanner);
+                break;
+            case "5":
+                manageMenu(scanner);
                 break;
             default:
                 System.out.println("Invalid choice. Please enter a number between 1 and 4.");
@@ -258,20 +270,33 @@ public class Main {
     }
 
     private static void viewReservations() {
-        if (loggedInUser != null && loggedInUser.getUserType() == UserType.STAFF) {
-            System.out.println("\nReservations:");
-            if (reservationSystem.getReservations().isEmpty()) {
-                System.out.println("No reservations available.");
-            } else {
-                for (Map<String, Object> reservation : reservationSystem.getReservations()) {
-                    System.out.println("\nTable Number: " + reservation.get("tableNumber"));
-                    System.out.println("Selected Meals: " + reservation.get("selectedMeals"));
-                    System.out.println("Total Price: $" + reservation.get("totalPrice"));
-                }
-            }
+        System.out.println("\nReservations:");
+        if (reservationSystem.getReservations().isEmpty()) {
+            System.out.println("No reservations available.");
         } else {
-            System.out.println("You do not have permission to view reservations.");
+            for (Map<String, Object> reservation : reservationSystem.getReservations()) {
+                System.out.println("\nTable Number: " + reservation.get("tableNumber"));
+                System.out.println("Selected Meals: " + reservation.get("selectedMeals"));
+                System.out.println("Total Price: $" + reservation.get("totalPrice"));
+                System.out.println("Reserved Date: " + reservation.get("date"));
+                System.out.println("Reserved Time: " + reservation.get("time"));
+                System.out.println("Reserved for User: " + ((User) reservation.get("user")).getUsername());
+            }
         }
     }
 
+
+    public static void reserveTable(Scanner scanner) {
+        try {
+            System.out.print("Enter table number: ");
+            int tableNumber = Integer.parseInt(scanner.nextLine());
+            System.out.print("Enter date for reservation (yyyy-MM-dd): ");
+            String date = scanner.nextLine();
+            System.out.print("Enter time for reservation (HH:mm): ");
+            String time = scanner.nextLine();
+            reservationSystem.reserveTable(tableNumber, date, time, loggedInUser);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
 }

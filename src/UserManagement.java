@@ -1,4 +1,5 @@
 // UserManagement.java
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,12 @@ public class UserManagement {
         this.users = new HashMap<>();
         // Pre-register the staff user
         users.put("staff", new User("staff", "staff123", UserType.STAFF));
+        // Pre-register default users
+        users.put("user1", new User("user1", "user1", UserType.USER));
+        users.put("user2", new User("user2", "user2", UserType.USER));
+        users.put("user3", new User("user3", "user3", UserType.USER));
+        users.put("user4", new User("user4", "user4", UserType.USER));
+        users.put("user5", new User("user5", "user5", UserType.USER));
     }
 
     public void registerUser(String username, String password, UserType userType) {
